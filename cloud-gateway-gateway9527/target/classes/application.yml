@@ -1,0 +1,48 @@
+
+server:
+  port: 9527
+
+spring:
+  application:
+    name: cloud-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true #开启从注册中心动态创建路由的功能，利用微服务名进行路由
+      routes:
+        - id: payment_routh #payment_route    #路由的ID，没有固定规则但要求唯一，建议配合服务名
+          #uri: http://localhost:8001          #匹配后提供服务的路由地址
+          uri: lb://cloud-payment-service #匹配后提供服务的路由地址
+          predicates: #断言
+            - Path=/payment/get/**         # 断言，路径相匹配的进行路由
+            - After=2021-02-21T17:44:13.446+08:00[Asia/Shanghai]  #只能在此时间后面 才能路由 详见test获取该时间
+            - Before=2018-01-20T06:06:06+08:00[Asia/Shanghai] #只能在此时间前面 才能路由
+            - Between=2018-01-20T06:06:06+08:00[Asia/Shanghai], 2019-01-20T06:06:06+08:00[Asia/Shanghai] #在此时间中间才能路由
+            - Cookie=ityouknow, kee.e # 可以接收两个参数，一个是 Cookie name , 一个是正则表达式，
+            - Header=X-Request-Id, \d+  #接收 2 个参数，一个 header 中属性名称和一个正则表达式，这个属性值和正则表达式匹配则执行。
+            - Host=**.ityouknow.com #接收一组参数，一组匹配的域名列表，这个模板是一个 ant 分隔的模板，用.号作为分隔符。它通过参数中的主机地址作为匹配规则。
+            - Method=GET  #请求方式 POST、GET、PUT、DELETE
+            - Query=smile  #支持传入两个参数，一个是属性名一个为属性值，属性值可以是正则表达式。
+            - RemoteAddr=192.168.1.1/24 #通过请求 ip 地址进行匹配
+
+
+        - id: payment_routh2 #payment_route    #路由的ID，没有固定规则但要求唯一，建议配合服务名
+          #uri: http://localhost:8001          #匹配后提供服务的路由地址
+          uri: lb://cloud-payment-service #匹配后提供服务的路由地址
+          predicates:
+            - Path=/payment/lb/**         # 断言，路径相匹配的进行路由
+            #- After=2020-02-21T15:51:37.485+08:00[Asia/Shanghai]
+            #- Cookie=username,zzyy
+            #- Header=X-Request-Id, \d+  # 请求头要有X-Request-Id属性并且值为整数的正则表达式
+
+eureka:
+  instance:
+    hostname: cloud-gateway-service
+  client: #服务提供者provider注册进eureka服务列表内
+    service-url:
+      register-with-eureka: true
+      fetch-registry: true
+      defaultZone: http://eureka7001.com:7001/eureka,http://eureka7002.com:7002/eureka
+
+
